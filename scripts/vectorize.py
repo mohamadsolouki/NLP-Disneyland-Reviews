@@ -59,7 +59,7 @@ if __name__ == "__main__":
     # Vectorization using TF-IDF
     tfidf_matrix, tfidf_features = vectorize_tfidf(data)
     print("TF-IDF Vectorization completed.")
-    save_npz('path/to/save/tfidf_matrix.npz', tfidf_matrix)
+    save_npz('data/tfidf_matrix.npz', tfidf_matrix)
 
     # Vectorization using Word2Vec
     word2vec_matrix = vectorize_word2vec(data)
