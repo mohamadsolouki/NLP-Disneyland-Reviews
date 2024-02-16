@@ -39,10 +39,10 @@ To run this project, you will need to have Python installed on your system. You 
     ```
 5. Navigate to the `scripts/` directory and execute the scripts in numerical order:
     ```
-    python 1. eda.py
-    python 2. preprocess.py
-    python 3. bagofwords.py
-    python 4. tfidf.py
+    python eda.py
+    python preprocess.py
+    python bagofwords.py
+    python tfidf.py
     ```
 
 ## Visualization
