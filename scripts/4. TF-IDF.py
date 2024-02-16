@@ -1,93 +1,106 @@
 import pandas as pd
-import numpy as np
+import matplotlib.pyplot as plt
 from sklearn.feature_extraction.text import TfidfVectorizer
-import gensim.downloader as api
-from gensim.models import Word2Vec
-from nltk.tokenize import word_tokenize
-from scipy.sparse import save_npz
+from sklearn.decomposition import LatentDirichletAllocation, TruncatedSVD, NMF
+from sklearn.manifold import TSNE
+from wordcloud import WordCloud
 
+# Load the preprocessed data
+file_path = 'data/cleaned_reviews.csv'
+clean_df = pd.read_csv(file_path)
 
-def load_data(file_path):
-    """
-    Load the preprocessed data from a CSV file.
-    """
-    return pd.read_csv(file_path)
+# Initialize TfidfVectorizer and fit and transform
+tfidf_vectorizer = TfidfVectorizer(stop_words='english', ngram_range=(1, 2), min_df=5, max_df=0.5)
+tfidf_vectors = tfidf_vectorizer.fit_transform(clean_df['Clean_Text'])
 
+# Function to display topics
+def display_topics(model, feature_names, no_top_words):
+    for topic_idx, topic in enumerate(model.components_):
+        print("\nTopic {}:".format(topic_idx + 1))
+        print(", ".join([feature_names[i] for i in topic.argsort()[:-no_top_words - 1:-1]]))
 
-def vectorize_tfidf(data):
-    """
-    Vectorize the text data using TF-IDF.
-    """
-    tfidf_vectorizer = TfidfVectorizer()
-    tfidf_matrix = tfidf_vectorizer.fit_transform(data['cleaned_text'])
-    return tfidf_matrix, tfidf_vectorizer.get_feature_names_out()
+# Function to plot word frequencies
+def plot_word_frequencies(words, freqs, title):
+    plt.figure(figsize=(10, 8))
+    plt.barh(range(len(words)), freqs, align='center')
+    plt.yticks(range(len(words)), words)
+    plt.gca().invert_yaxis()  # Invert y-axis to have the highest frequency on top
+    plt.xlabel('Frequency')
+    plt.title(title)
+    plt.savefig('images/word_frequencies.png')
+    plt.show()
 
+# Function to generate a word cloud
+def generate_word_cloud(topic, feature_names, no_top_words):
+    word_freqs = {feature_names[i]: topic[i] for i in topic.argsort()[:-no_top_words - 1:-1]}
+    wordcloud = WordCloud(width=800, height=400, background_color='white').generate_from_frequencies(word_freqs)
+    plt.figure(figsize=(10, 5))
+    plt.imshow(wordcloud, interpolation='bilinear')
+    plt.axis('off')
+    plt.savefig('images/tfidf_word_cloud.png')
+    plt.show()
 
-def average_word_vectors(words, model, vocabulary, num_features):
-    """
-    Average the word vectors for a set of words.
-    """
-    feature_vector = np.zeros((num_features,), dtype="float32")
-    nwords = 0
+# Sum up the TF-IDF scores of each vocabulary word
+sum_tfidf = tfidf_vectors.sum(axis=0)
+words_tfidf = [(word, sum_tfidf[0, idx]) for word, idx in tfidf_vectorizer.vocabulary_.items()]
+sorted_words_tfidf = sorted(words_tfidf, key=lambda x: x[1], reverse=True)
 
-    for word in words:
-        if word in vocabulary:
-            nwords = nwords + 1
-            feature_vector = np.add(feature_vector, model[word])
+# Display the top N words with the highest TF-IDF score
+top_n = 30
+print("\nTop {} words with the highest TF-IDF scores:".format(top_n))
+print("-" * 40)
+for word, score in sorted_words_tfidf[:top_n]:
+    print("{:<20} : {}".format(word, score))
+print("-" * 40)
 
-    if nwords:
-        feature_vector = np.divide(feature_vector, nwords)
-    return feature_vector
+# Plotting the top N words with the highest TF-IDF scores
+top_words, top_scores = zip(*sorted_words_tfidf[:top_n])
+plot_word_frequencies(top_words, top_scores, 'Top {} Words with Highest TF-IDF Scores'.format(top_n))
 
+# Number of topics and top words to display
+n_topics = 4
+no_top_words = 10
 
-def vectorize_word2vec(data):
-    """
-    Vectorize the text data using a pre-trained Word2Vec model.
-    """
-    model = api.load("word2vec-google-news-300")
-    vocabulary = set(model.index_to_key)
-    features = [average_word_vectors(tokenized_sentence, model, vocabulary, 300) for tokenized_sentence in
-                data['cleaned_text'].map(word_tokenize)]
-    return pd.DataFrame(features)
+# Initialize and fit LDA, LSA, and NMF models
+lda = LatentDirichletAllocation(n_components=n_topics, random_state=42).fit(tfidf_vectors)
+lsa = TruncatedSVD(n_components=n_topics).fit(tfidf_vectors)
+nmf = NMF(n_components=n_topics, random_state=42).fit(tfidf_vectors)
 
+# Display topics for each model
+print("\nLDA Model Topics:")
+display_topics(lda, tfidf_vectorizer.get_feature_names_out(), no_top_words)
+print("\nLSA Model Topics:")
+display_topics(lsa, tfidf_vectorizer.get_feature_names_out(), no_top_words)
+print("\nNMF Model Topics:")
+display_topics(nmf, tfidf_vectorizer.get_feature_names_out(), no_top_words)
 
-def load_vectorized_data(tfidf_path):
-    """
-    Load the TF-IDF vectorized data.
-    """
-    return load_npz(tfidf_path)
+# Generate word clouds for LDA topics
+for topic_idx, topic in enumerate(lda.components_):
+    print("Word Cloud for LDA Topic {}:".format(topic_idx + 1))
+    generate_word_cloud(topic, tfidf_vectorizer.get_feature_names_out(), no_top_words)
 
+# t-SNE Visualization for LDA
+def tsne_visualization(model, data):
+    print("\nPerforming t-SNE Visualization...")
+    topic_weights = model.transform(data)
+    tsne_model = TSNE(n_components=2, verbose=0, random_state=0, angle=.99, init='pca')
+    tsne_lda = tsne_model.fit_transform(topic_weights)
+    return tsne_lda
 
-def display_top_tfidf_features(row, features, top_n=10):
-    """
-    Get top n tfidf values in row and return them with their corresponding feature names.
-    """
-    topn_ids = row.argsort()[-top_n:][::-1]
-    top_feats = [(features[i], row[i]) for i in topn_ids]
-    df = pd.DataFrame(top_feats, columns=['feature', 'tfidf'])
-    return df
+# Plot t-SNE
+def plot_tsne(tsne_results, title):
+    plt.figure(figsize=(12, 8))
+    plt.scatter(tsne_results[:, 0], tsne_results[:, 1], alpha=0.7)
+    plt.xlabel('t-SNE feature 1')
+    plt.ylabel('t-SNE feature 2')
+    plt.title(title)
+    plt.savefig('images/tfidf_tsne_lda.png')
+    plt.show()
+
+tsne_lda = tsne_visualization(lda, tfidf_vectors)
+plot_tsne(tsne_lda, 't-SNE Visualization of LDA Topics')
 
 
 if __name__ == "__main__":
-    file_path = 'data/DisneylandReviews_cleaned.csv'
-    data = load_data(file_path)
-
-    # Vectorization using TF-IDF
-    tfidf_matrix, tfidf_features = vectorize_tfidf(data)
-    print("TF-IDF Vectorization completed.")
-    tfidf_vectorizer = TfidfVectorizer()
-    tfidf_matrix = tfidf_vectorizer.fit_transform(data['cleaned_text'])
-    tfidf_feature_names = tfidf_vectorizer.get_feature_names_out()
-
-    # Select a few sample rows to display top features
-    sample_rows = tfidf_matrix[np.random.choice(tfidf_matrix.shape[0], 5, replace=False), :]
-
-    for i, row in enumerate(sample_rows):
-        print(f"Top TF-IDF features for Sample Review {i + 1}:\n")
-        print(display_top_tfidf_features(row.toarray().flatten(), tfidf_feature_names), "\n")
-        save_npz('data/tfidf_matrix.npz', tfidf_matrix)
-
-    # Vectorization using Word2Vec
-    word2vec_matrix = vectorize_word2vec(data)
-    print("Word2Vec Vectorization completed.")
-    word2vec_matrix.to_csv('data/word2vec_matrix.csv', index=False)
+    # This script can be run as a standalone program, with the above functions defined.
+    pass
