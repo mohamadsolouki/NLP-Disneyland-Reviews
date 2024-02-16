@@ -3,6 +3,16 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+def check_missing_values(data):
+    """
+    Check for missing values in the dataset.
+
+    """
+    missing_values = data.isnull().sum()
+    missing_values = missing_values[missing_values > 0]
+    missing_percentage = (missing_values / len(data)) * 100
+    missing_info = pd.DataFrame({'Missing Values': missing_values, 'Missing Percentage': missing_percentage})
+    return missing_info
 
 def perform_eda(data):
     """
@@ -27,7 +37,7 @@ def perform_eda(data):
     plt.ylabel('Count')
     plt.xlabel('Rating')
     plt.tight_layout()
-    plt.savefig('../images/rating_distribution.png')
+    plt.savefig('images/rating_distribution.png')
     plt.show()
     eda_results['rating_distribution_plot'] = plt
 
@@ -38,7 +48,7 @@ def perform_eda(data):
     plt.xlabel('Count')
     plt.ylabel('Branch')
     plt.tight_layout()
-    plt.savefig('../images/branch_distribution.png')
+    plt.savefig('images/branch_distribution.png')
     plt.show()
     eda_results['branch_distribution_plot'] = plt
 
@@ -50,7 +60,7 @@ def perform_eda(data):
     plt.xlabel('Length of Review')
     plt.ylabel('Frequency')
     plt.tight_layout()
-    plt.savefig('../images/review_length.png')
+    plt.savefig('images/review_length.png')
     plt.show()
     eda_results['review_length_plot'] = plt
 
@@ -63,7 +73,7 @@ def perform_eda(data):
     plt.xlabel('Year')
     plt.xticks(rotation=45)
     plt.tight_layout()
-    plt.savefig('../images/year_distribution.png')
+    plt.savefig('images/year_distribution.png')
     plt.show()
     eda_results['year_distribution_plot'] = plt
 
@@ -75,7 +85,7 @@ def perform_eda(data):
     plt.xlabel('Number of Reviews')
     plt.ylabel('Reviewer Location')
     plt.tight_layout()
-    plt.savefig('../images/top_locations.png')
+    plt.savefig('images/top_locations.png')
     plt.show()
     eda_results['top_locations_plot'] = plt
     
