@@ -27,7 +27,7 @@ To run this project, you will need to have Python installed on your system. You 
 
 1. Clone this repository to your local machine using:
     ```
-    git clone https://github.com/mohamadsolouki/disneyland-complaint-analysis.git
+    git clone https://github.com/mohamadsolouki/NLP-Disneyland-Reviews.git
     ```
 2. Navigate to the project directory: `cd NLP-Disneyland-Reviews`
 3. Create and activate a virtual environment:
