@@ -1,6 +1,6 @@
 # Disneyland Reviews Complaint Analysis
 
-This repository contains a series of scripts and analyses that focus on understanding customer complaints about Disneyland through Natural Language Processing (NLP) techniques. The project makes use of the Disneyland Reviews Dataset to identify key areas of customer dissatisfaction and provides insights into the customer experience. This project involves performing a comprehensive Natural Language Processing (NLP) analysis on a dataset of Disneyland reviews. The objective is to preprocess the text data, vectorize it, and perform topic modeling to extract insights from the reviews.
+This repository contains a series of scripts and analyses that focus on understanding customer complaints about Disneyland through Natural Language Processing (NLP) techniques. The objective is to preprocess the text data, vectorize it, and perform topic modeling to extract insights from the reviews.
 
 ## Project Structure
 
