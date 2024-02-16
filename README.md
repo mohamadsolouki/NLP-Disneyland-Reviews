@@ -12,10 +12,10 @@ This repository contains a series of scripts and analyses that focus on understa
 
 The analysis pipeline is broken down into four main Python scripts:
 
-1. `eda.py`: An exploratory data analysis (EDA) script that generates initial observations, statistics, and visualizations to better understand the dataset.
-2. `preprocess.py`: This script preprocesses the text data — cleaning, tokenizing, and filtering to prepare it for NLP tasks.
-3. `bagofwords.py`: Utilizes the Bag of Words model to create a document-term matrix and analyze word frequencies within the dataset.
-4. `tfidf.py`: Applies Term Frequency-Inverse Document Frequency (TF-IDF) to evaluate how important a word is to a document within a corpus.
+1. `1. eda.py`: An exploratory data analysis (EDA) script that generates initial observations, statistics, and visualizations to better understand the dataset.
+2. `2. preprocess.py`: This script preprocesses the text data — cleaning, tokenizing, and filtering to prepare it for NLP tasks.
+3. `3. bagofwords.py`: Utilizes the Bag of Words model to create a document-term matrix and analyze word frequencies within the dataset.
+4. `4. tfidf.py`: Applies Term Frequency-Inverse Document Frequency (TF-IDF) to evaluate how important a word is to a document within a corpus.
 
 ## Dataset
 
@@ -39,10 +39,10 @@ To run this project, you will need to have Python installed on your system. You 
     ```
 5. Navigate to the `scripts/` directory and execute the scripts in numerical order:
     ```
-    python eda.py
-    python preprocess.py
-    python bagofwords.py
-    python tfidf.py
+    python 1. eda.py
+    python 2. preprocess.py
+    python 3. bagofwords.py
+    python 4. tfidf.py
     ```
 
 ## Visualization
