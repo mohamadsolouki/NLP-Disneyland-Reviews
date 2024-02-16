@@ -37,7 +37,7 @@ To run this project, you will need to have Python installed on your system. You 
     ```
     pip install -r requirements.txt
     ```
-5. Navigate to the `scripts/` directory and execute the scripts in numerical order:
+5. Navigate to the `scripts/` directory and execute the scripts in following order:
     ```
     python eda.py
     python preprocess.py
@@ -47,16 +47,7 @@ To run this project, you will need to have Python installed on your system. You 
 
 ## Visualization
 
-The `images/` directory includes all visualizations generated during the analysis. These images provide insights into the dataset and the results of the various NLP techniques applied.
-
-## Requirements
-
-A `requirements.txt` file is provided to facilitate the installation of necessary packages. This can be installed using the following command:
-
-```bash
-pip install -r requirements.txt
-   
-   ```
+The `images/` directory includes all visualizations generated during the analysis. These images provide insights into the dataset.
 
 ## Contributions
 Contributions to this project are welcome. If you would like to contribute, please fork the repository, make your changes, and submit a pull request.
@@ -65,6 +56,6 @@ Contributions to this project are welcome. If you would like to contribute, plea
 This project is licensed under the MIT License - see the LICENSE file in the root directory for more details.
 
 ## Contact
-For any further questions or comments, please feel free to open an issue in this repository, and we will get back to you as soon as possible.
+For any further questions or comments, please feel free to open an issue in this repository, and I will get back to you as soon as possible.
 
-We hope that this analysis provides valuable insights into Disneyland customer reviews and serves as a useful example of applying NLP techniques to real-world data.
+I hope that this analysis provides valuable insights into Disneyland customer reviews and serves as a useful example of applying NLP techniques to real-world data.
