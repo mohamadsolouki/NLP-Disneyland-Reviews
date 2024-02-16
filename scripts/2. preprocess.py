@@ -74,7 +74,7 @@ def show_wordcloud(text):
     plt.imshow(wordcloud, interpolation='bilinear')
     plt.axis('off')
     plt.tight_layout()
-    plt.savefig('../images/wordcloud.png')
+    plt.savefig('images/wordcloud.png')
     plt.show()
 
 # Create a word cloud for all reviews
