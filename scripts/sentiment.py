@@ -1,4 +1,6 @@
 from textblob import TextBlob
+import matplotlib.pyplot as plt
+import seaborn as sns
 import pandas as pd
 
 # load the preprocessed reviews
@@ -22,8 +24,6 @@ print("The standard deviation of the sentiment of the reviews is:")
 print(df['sentiment'].std())
 
 # plot the sentiment distribution
-import matplotlib.pyplot as plt
-import seaborn as sns
 sns.set(style="whitegrid")
 plt.figure(figsize=(10, 6))
 sns.histplot(df['sentiment'], kde=True, color='blue')
@@ -32,8 +32,3 @@ plt.xlabel('Sentiment')
 plt.ylabel('Count')
 plt.show()
 plt.savefig('images/sentiment_distribution.png')
-
-
-
-
-

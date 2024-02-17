@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+
 def check_missing_values(data):
     """
     Check for missing values in the dataset.
@@ -13,6 +14,7 @@ def check_missing_values(data):
     missing_percentage = (missing_values / len(data)) * 100
     missing_info = pd.DataFrame({'Missing Values': missing_values, 'Missing Percentage': missing_percentage})
     return missing_info
+
 
 def perform_eda(data):
     """
@@ -43,7 +45,8 @@ def perform_eda(data):
 
     # Visualization 2: Reviews per Disneyland Branch
     plt.figure(figsize=(10, 6))
-    sns.countplot(data=data, y='Branch', hue='Branch', dodge=False, order=data['Branch'].value_counts().index, legend=False)
+    sns.countplot(data=data, y='Branch', hue='Branch', dodge=False, order=data['Branch'].value_counts().index,
+                  legend=False)
     plt.title('Reviews per Disneyland Branch')
     plt.xlabel('Count')
     plt.ylabel('Branch')
@@ -88,7 +91,6 @@ def perform_eda(data):
     plt.savefig('images/top_locations.png')
     plt.show()
     eda_results['top_locations_plot'] = plt
-    
 
     return eda_results
 
