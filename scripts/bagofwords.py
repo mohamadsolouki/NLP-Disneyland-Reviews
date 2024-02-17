@@ -15,11 +15,13 @@ clean_df = pd.read_csv(file_path)
 count_vectorizer = CountVectorizer(stop_words='english', ngram_range=(2, 3), min_df=5, max_df=0.5)
 count_vectors = count_vectorizer.fit_transform(clean_df['Clean_Text'])
 
+
 # Function to display topics
 def display_topics(model, feature_names, no_top_words):
     for topic_idx, topic in enumerate(model.components_):
         print("\nTopic {}:".format(topic_idx + 1))
         print(", ".join([feature_names[i] for i in topic.argsort()[:-no_top_words - 1:-1]]))
+
 
 # Function to plot word frequencies
 def plot_word_frequencies(words, freqs, title):
@@ -31,6 +33,7 @@ def plot_word_frequencies(words, freqs, title):
     plt.title(title)
     plt.show()
 
+
 # Function to generate a word cloud
 def generate_word_cloud(topic, feature_names, no_top_words):
     word_freqs = {feature_names[i]: topic[i] for i in topic.argsort()[:-no_top_words - 1:-1]}
@@ -39,6 +42,7 @@ def generate_word_cloud(topic, feature_names, no_top_words):
     plt.imshow(wordcloud, interpolation='bilinear')
     plt.axis('off')
     plt.show()
+
 
 # Sum up the counts of each vocabulary word
 sum_words = count_vectors.sum(axis=0)
@@ -79,6 +83,7 @@ for topic_idx, topic in enumerate(lda.components_):
     print("Word Cloud for LDA Topic {}:".format(topic_idx + 1))
     generate_word_cloud(topic, count_vectorizer.get_feature_names_out(), no_top_words)
 
+
 # t-SNE Visualization for LDA
 def tsne_visualization(model, data):
     print("\nPerforming t-SNE Visualization...")
@@ -95,8 +100,6 @@ def tsne_visualization(model, data):
     plt.show()
 
     return tsne_lda
-
-
 
 
 if __name__ == "__main__":
