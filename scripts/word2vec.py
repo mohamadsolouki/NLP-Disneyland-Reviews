@@ -37,5 +37,5 @@ similar_words = word2vec_model.similar_by_word('line')
 print(f"The words similar to 'line' are: {similar_words}")
 
 # Step 15: Use the Word2Vec model to find the similarity between two words
-similarity = word2vec_model.wv.similarity('good', 'bad')
+similarity = word2vec_model.similarity('good', 'bad')
 print(f"The similarity between 'good' and 'bad' is {similarity}")
