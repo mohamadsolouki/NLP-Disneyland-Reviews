@@ -26,7 +26,7 @@ custom_stopwords = {
     'about', 'between', 'into', 'through', 'during', 'before', 'after', 'above', 'below',
     'over', 'under', 'to', 'of', 'for', 'by', 'and', 'but', 'or', 'so', 'yet', 'because',
     'as', 'until', 'than', '10', '20', '30', '45', '15', 'minute', 'second', 'hour', 'day', 'pm'
-    'park', 'go', 'one', 'kid'
+                                                                                            'park', 'go', 'one', 'kid'
 }
 
 # Update stop words list
@@ -37,15 +37,18 @@ df = pd.read_csv('data/DisneylandReviews.csv', encoding='ISO-8859-1')
 low_rating_threshold = 3
 clean_df = df[df['Rating'] <= low_rating_threshold]
 
+
 # Handling negations by creating bi-grams with negation word and subsequent word.
 def handle_negations(text):
     # Define the negation pattern
     negation_pattern = re.compile(
-        r"\b(not|no|never|none|cannot|can't|couldn't|shouldn't|won't|wouldn't|don't|doesn't|didn't|isn't|aren't|ain't)\s([a-z]+)\b",
+        r"\b(not|no|never|none|cannot|can't|couldn't|shouldn't|won't|wouldn't|don't|doesn't|didn't|isn't|aren't|ain't"
+        r")\s([a-z]+)\b",
         re.IGNORECASE
     )
     negated_form = r'\1_\2'  # E.g., "not_good"
     return negation_pattern.sub(negated_form, text)
+
 
 # Function to preprocess text
 def preprocess_text(text):
@@ -58,6 +61,7 @@ def preprocess_text(text):
     lemmatized = [token.lemma_ for token in lemmatized]
     return ' '.join(lemmatized)
 
+
 # Apply preprocessing to the Review_Text column of the DataFrame
 clean_df['Clean_Text'] = clean_df['Review_Text'].apply(preprocess_text)
 
@@ -66,6 +70,7 @@ print(clean_df[['Review_Text', 'Clean_Text']].head())
 
 # Export to a new CSV file
 clean_df.to_csv('data/cleaned_reviews.csv', index=False)
+
 
 # Function to display a word cloud
 def show_wordcloud(text):
@@ -76,6 +81,7 @@ def show_wordcloud(text):
     plt.tight_layout()
     plt.savefig('images/wordcloud.png')
     plt.show()
+
 
 # Create a word cloud for all reviews
 all_reviews = ' '.join(clean_df['Clean_Text'])
