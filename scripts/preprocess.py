@@ -72,17 +72,14 @@ print(clean_df[['Review_Text', 'Clean_Text']].head())
 clean_df.to_csv('data/cleaned_reviews.csv', index=False)
 
 
-# Function to display a word cloud
-def show_wordcloud(text):
-    wordcloud = WordCloud(background_color='white').generate(text)
-    plt.figure(figsize=(10, 6))
-    plt.imshow(wordcloud, interpolation='bilinear')
-    plt.axis('off')
-    plt.tight_layout()
-    plt.savefig('images/wordcloud.png')
-    plt.show()
+# Display the word cloud for the cleaned text
+clean_text = ' '.join(clean_df['Clean_Text'])
+wordcloud = WordCloud(width=800, height=400, background_color='white').generate(clean_text)
+plt.figure(figsize=(10, 5))
+plt.imshow(wordcloud, interpolation='bilinear')
+plt.axis('off')
+plt.title('wordcloud of cleaned text (rating <= 3)')
+plt.tight_layout()
+plt.savefig('images/word_cloud.png')
+plt.show()
 
-
-# Create a word cloud for all reviews
-all_reviews = ' '.join(clean_df['Clean_Text'])
-show_wordcloud(all_reviews)
