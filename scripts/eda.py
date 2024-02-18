@@ -2,6 +2,8 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+from wordcloud import WordCloud
+
 
 
 def check_missing_values(data):
@@ -95,19 +97,14 @@ def perform_eda(data):
     # Visualization 6: Rating Over Years by Branch
     rating_per_year_branch = df.groupby(['Year', 'Branch'])['Rating'].mean().unstack()
     plt.figure(figsize=(14, 8))
-    rating_per_year_branch.plot(marker='o', linewidth=2)
-    plt.title('Average Rating Over Years by Branch')
-    plt.xlabel('Year')
-    plt.ylabel('Average Rating')
-    plt.legend(title='Branch', bbox_to_anchor=(1.05, 1), loc='upper left')
-    plt.grid(True)
+    sns.heatmap(rating_per_year_branch, annot=True, cmap='coolwarm', fmt='.2f')
+    plt.title('Rating Over Years by Branch')
     plt.tight_layout()
-    plt.savefig('images/rating_years_branch.png')
+    plt.savefig('images/rating_over_years_by_branch.png')
     plt.show()
-    eda_results['rating_years_branch'] = plt
+    eda_results['rating_over_years_by_branch'] = plt
 
     # Visualization 7: Wordcloud for positive reviews with 4 or 5 rating
-    from wordcloud import WordCloud
     positive_reviews = data[data['Rating'] >= 4]
     positive_reviews_text = ' '.join(positive_reviews['Review_Text'])
     wordcloud = WordCloud(width=800, height=400, random_state=21, max_font_size=110, background_color='white',
