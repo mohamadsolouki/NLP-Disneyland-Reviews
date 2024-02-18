@@ -92,6 +92,49 @@ def perform_eda(data):
     plt.show()
     eda_results['top_locations_plot'] = plt
 
+    # Visualization 6: Rating Over Years by Branch
+    rating_per_year_branch = df.groupby(['Year', 'Branch'])['Rating'].mean().unstack()
+    plt.figure(figsize=(14, 8))
+    rating_per_year_branch.plot(marker='o', linewidth=2)
+    plt.title('Average Rating Over Years by Branch')
+    plt.xlabel('Year')
+    plt.ylabel('Average Rating')
+    plt.legend(title='Branch', bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.grid(True)
+    plt.tight_layout()
+    plt.savefig('images/rating_years_branch.png')
+    plt.show()
+    eda_results['rating_years_branch'] = plt
+
+    # Visualization 7: Wordcloud for positive reviews with 4 or 5 rating
+    from wordcloud import WordCloud
+    positive_reviews = data[data['Rating'] >= 4]
+    positive_reviews_text = ' '.join(positive_reviews['Review_Text'])
+    wordcloud = WordCloud(width=800, height=400, random_state=21, max_font_size=110, background_color='white',
+                          max_words=100).generate(positive_reviews_text)
+    plt.figure(figsize=(10, 6))
+    plt.imshow(wordcloud, interpolation="bilinear")
+    plt.axis('off')
+    plt.title('Wordcloud for Positive Reviews')
+    plt.tight_layout()
+    plt.savefig('images/wordcloud_positive_reviews.png')
+    plt.show()
+    eda_results['wordcloud_positive_reviews'] = plt
+
+    # Visualization 8: Wordcloud for negative reviews with 1, 2 or 3 rating
+    negative_reviews = data[data['Rating'] <= 3]
+    negative_reviews_text = ' '.join(negative_reviews['Review_Text'])
+    wordcloud = WordCloud(width=800, height=400, random_state=21, max_font_size=110, background_color='white',
+                          max_words=100).generate(negative_reviews_text)
+    plt.figure(figsize=(10, 6))
+    plt.imshow(wordcloud, interpolation="bilinear")
+    plt.axis('off')
+    plt.title('Wordcloud for Negative Reviews')
+    plt.tight_layout()
+    plt.savefig('images/wordcloud_negative_reviews.png')
+    plt.show()
+    eda_results['wordcloud_negative_reviews'] = plt
+
     return eda_results
 
 
