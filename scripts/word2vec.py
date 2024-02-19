@@ -41,30 +41,35 @@ similar_words = word2vec_model.similar_by_word('line')
 print(f"The words similar to 'line' are: {similar_words}")
 
 # Use the Word2Vec model to find the similarity between two words
-similarity = word2vec_model.similarity('good', 'bad')
-print(f"The similarity between 'good' and 'bad' is {similarity}")
+similarity = word2vec_model.similarity('queue', 'long')
+print(f"The similarity between 'queue' and 'long' is {similarity}")
 
 # Visualizing using pyLDAvis
+import pyLDAvis
+import IPython
+
 # Visualize the topics
-pyLDAvis.enable_notebook()
+if IPython.get_ipython() is not None:
+    pyLDAvis.enable_notebook()
+
 vis = pyLDAvis.gensim.prepare(lda_model, corpus, dictionary)
 pyLDAvis.save_html(vis, 'lda_topics.html')
 
-# Visualize the Word2Vec model using t-SNE
-# Get the word vectors
-word_vectors = word2vec_model.vectors
+# # Visualize the Word2Vec model using t-SNE
+# # Get the word vectors
+# word_vectors = word2vec_model.vectors
 
-# Reduce the dimensionality of the word vectors using t-SNE
-tsne = TSNE(n_components=2, random_state=42)
-word_vectors_2d = tsne.fit_transform(word_vectors)
+# # Reduce the dimensionality of the word vectors using t-SNE
+# tsne = TSNE(n_components=2, random_state=42)
+# word_vectors_2d = tsne.fit_transform(word_vectors)
 
-# Plot the word vectors in 2D
-plt.figure(figsize=(10, 10))
-plt.scatter(word_vectors_2d[:, 0], word_vectors_2d[:, 1], marker='o')
-plt.title('t-SNE visualization of Word2Vec model')
-plt.xlabel('Dimension 1')
-plt.ylabel('Dimension 2')
-plt.tight_layout()
-plt.savefig('images/word2vec_tsne.png')
-plt.show()
+# # Plot the word vectors in 2D
+# plt.figure(figsize=(10, 10))
+# plt.scatter(word_vectors_2d[:, 0], word_vectors_2d[:, 1], marker='o')
+# plt.title('t-SNE visualization of Word2Vec model')
+# plt.xlabel('Dimension 1')
+# plt.ylabel('Dimension 2')
+# plt.tight_layout()
+# plt.savefig('images/word2vec_tsne.png')
+# plt.show()
 
