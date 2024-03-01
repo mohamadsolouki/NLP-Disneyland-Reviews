@@ -1,42 +1,27 @@
-import nltk
-import spacy
-import re
 import pandas as pd
+import re
+import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
-import matplotlib.pyplot as plt
-from wordcloud import WordCloud
+from nltk.stem import WordNetLemmatizer
+from textblob import TextBlob
+
 
 # Ensure NLTK resources are downloaded
 nltk.download('punkt')
 nltk.download('stopwords')
+nltk.download('wordnet')
+nltk.download('averaged_perceptron_tagger')
 
-# Load English tokenizer, tagger, parser, NER, and word vectors
-# Disabling unnecessary components for efficiency
+# Load English tagger, and word vectors
 nlp = spacy.load("en_core_web_sm", disable=["parser", "ner"])
 
 # Custom stopwords
-custom_stopwords = {
-    'disney', 'land', 'disneyland', 'rides', 'ride', 'good', 'really', 'very', 'quite',
-    'pretty', 'especially', 'actually', 'probably', 'maybe', 'sure', 'time', 'day', 'year',
-    'thing', 'world', 'point', 'bit', 'number', 'week', 'make', 'say', 'come', 'go', 'know',
-    'take', 'see', 'get', 'want', 'think', 'look', 'tell', 'try', 'use', 'need', 'feel',
-    'i', 'you', 'he', 'she', 'it', 'we', 'they', 'me', 'him', 'her', 'us', 'them', 'my',
-    'your', 'his', 'its', 'our', 'their', 'a', 'an', 'the', 'in', 'on', 'at', 'from', 'with',
-    'about', 'between', 'into', 'through', 'during', 'before', 'after', 'above', 'below',
-    'over', 'under', 'to', 'of', 'for', 'by', 'and', 'but', 'or', 'so', 'yet', 'because',
-    'as', 'until', 'than', '10', '20', '30', '45', '15', 'minute', 'second', 'hour', 'day', 'pm'
-                                                                                            'park', 'go', 'one', 'kid'
-}
+custom_stopwords = {'disney', 'land', 'disneyland', 'go', 'one', 'kid', 'world', 'I', 'day', 'thing', 'went', 'child', 'daughter'}
+stop_words = set(stopwords.words('english')) | custom_stopwords
 
-# Update stop words list
-stop_words = set(stopwords.words('english')).union(custom_stopwords)
-
-# Filtering the DataFrame to include only rows with low ratings
-df = pd.read_csv('data/DisneylandReviews.csv', encoding='ISO-8859-1')
-low_rating_threshold = 3
-clean_df = df[df['Rating'] <= low_rating_threshold]
-
+# Lemmatizer
+lemmatizer = WordNetLemmatizer()
 
 # Handling negations by creating bi-grams with negation word and subsequent word.
 def handle_negations(text):
@@ -49,36 +34,29 @@ def handle_negations(text):
     negated_form = r'\1_\2'  # E.g., "not_good"
     return negation_pattern.sub(negated_form, text)
 
-
 # Function to preprocess text
 def preprocess_text(text):
-    text = text.lower()  # Normalize text to lowercase
-    text = re.sub(r'[^a-zA-Z0-9\s]', '', text)  # Remove punctuation
-    text = handle_negations(text)  # Handle negations
-    tokens = word_tokenize(text)  # Tokenize text
-    tokens = [token for token in tokens if token not in stop_words]  # Remove stop words
-    lemmatized = nlp(' '.join(tokens))  # Lemmatization
-    lemmatized = [token.lemma_ for token in lemmatized]
-    return ' '.join(lemmatized)
-
+    try:
+        text = text.lower()
+        text = re.sub(r'[^a-zA-Z0-9\s]', '', text)
+        text = handle_negations(text)  # Handle negations
+        tokens = word_tokenize(text)
+        tokens = [token for token in tokens if token not in stop_words and token.isalnum()]
+        lemmatized = nlp(' '.join(tokens))
+        lemmatized = [token.lemma_ for token in lemmatized]
+        return ' '.join(lemmatized)
+    except Exception as e:
+        print(f"Error processing text: {e}")
+        return ""
 
 # Apply preprocessing to the Review_Text column of the DataFrame
-clean_df['Clean_Text'] = clean_df['Review_Text'].apply(preprocess_text)
-
-# Display the first few rows of the processed data
-print(clean_df[['Review_Text', 'Clean_Text']].head())
+low_rating_threshold = 3
+df = df[df['Rating'] <= low_rating_threshold]
+df['Clean_Text'] = df['Review_Text'].apply(preprocess_text)
 
 # Export to a new CSV file
-clean_df.to_csv('data/cleaned_reviews.csv', index=False)
+df.to_csv('data/cleaned_reviews.csv', index=False)
 
-
-# Display the word cloud for the cleaned text
-clean_text = ' '.join(clean_df['Clean_Text'])
-wordcloud = WordCloud(width=800, height=400, background_color='white').generate(clean_text)
-plt.figure(figsize=(10, 5))
-plt.imshow(wordcloud, interpolation='bilinear')
-plt.axis('off')
-plt.title('wordcloud of cleaned text (rating <= 3)')
-plt.tight_layout()
-plt.savefig('images/wordcloud_cleaned_text.png')
-plt.show()
+if __name__ == "__main__":
+    # This script can be run as a standalone program, with the above functions defined.
+    pass
