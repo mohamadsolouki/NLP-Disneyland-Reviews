@@ -1,104 +1,107 @@
 import pandas as pd
+import gensim
+from gensim.models import LdaModel, Nmf
+from gensim.models.coherencemodel import CoherenceModel
+from gensim.corpora import Dictionary
 import matplotlib.pyplot as plt
+import numpy as np
+from nltk import bigrams, trigrams
+import warnings
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.decomposition import LatentDirichletAllocation, TruncatedSVD, NMF
-from sklearn.manifold import TSNE
-from wordcloud import WordCloud
 
-# Load the preprocessed data
-file_path = 'data/cleaned_reviews.csv'
-clean_df = pd.read_csv(file_path)
+# Suppress warnings that do not affect the analysis
+warnings.simplefilter(action='ignore', category=DeprecationWarning)
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
-# Initialize TfidfVectorizer and fit and transform
-tfidf_vectorizer = TfidfVectorizer(stop_words='english', ngram_range=(1, 2), min_df=5, max_df=0.5)
-tfidf_vectors = tfidf_vectorizer.fit_transform(clean_df['Clean_Text'])
+# Load the cleaned reviews
+df = pd.read_csv('data/cleaned_reviews.csv')
 
-# Function to display topics
-def display_topics(model, feature_names, no_top_words):
-    for topic_idx, topic in enumerate(model.components_):
-        print("\nTopic {}:".format(topic_idx + 1))
-        print(", ".join([feature_names[i] for i in topic.argsort()[:-no_top_words - 1:-1]]))
+# Loading list of strings containing the preprocessed documents
+# df should be defined previously and should contain a 'Clean_Text' column
+preprocessed_docs = df['Clean_Text'].tolist()
 
-# Function to plot word frequencies
-def plot_word_frequencies(words, freqs, title):
-    plt.figure(figsize=(10, 8))
-    plt.barh(range(len(words)), freqs, align='center')
-    plt.yticks(range(len(words)), words)
-    plt.gca().invert_yaxis()  # Invert y-axis to have the highest frequency on top
-    plt.xlabel('Frequency')
-    plt.title(title)
-    plt.savefig('images/word_frequencies.png')
-    plt.show()
+# Tokenized docs needed for coherence score calculation
+tokenized_docs = [doc.split() for doc in preprocessed_docs]
 
-# Function to generate a word cloud
-def generate_word_cloud(topic, feature_names, no_top_words):
-    word_freqs = {feature_names[i]: topic[i] for i in topic.argsort()[:-no_top_words - 1:-1]}
-    wordcloud = WordCloud(width=800, height=400, background_color='white').generate_from_frequencies(word_freqs)
-    plt.figure(figsize=(10, 5))
-    plt.imshow(wordcloud, interpolation='bilinear')
-    plt.axis('off')
-    plt.savefig('images/tfidf_word_cloud.png')
-    plt.show()
+# Generate bigrams and trigrams
+bigram_trigram_docs = []
+for doc in tokenized_docs:
+    grams = list(bigrams(doc)) + list(trigrams(doc))
+    bigram_trigram_docs.append(['_'.join(gram) for gram in grams])
 
-# Sum up the TF-IDF scores of each vocabulary word
-sum_tfidf = tfidf_vectors.sum(axis=0)
-words_tfidf = [(word, sum_tfidf[0, idx]) for word, idx in tfidf_vectorizer.vocabulary_.items()]
-sorted_words_tfidf = sorted(words_tfidf, key=lambda x: x[1], reverse=True)
+# Create a TF-IDF vectorizer
+tfidf_vectorizer = TfidfVectorizer()
 
-# Display the top N words with the highest TF-IDF score
-top_n = 30
-print("\nTop {} words with the highest TF-IDF scores:".format(top_n))
-print("-" * 40)
-for word, score in sorted_words_tfidf[:top_n]:
-    print("{:<20} : {}".format(word, score))
-print("-" * 40)
+# Convert the documents to a TF-IDF matrix
+tfidf_matrix = tfidf_vectorizer.fit_transform([' '.join(doc) for doc in bigram_trigram_docs])
 
-# Plotting the top N words with the highest TF-IDF scores
-top_words, top_scores = zip(*sorted_words_tfidf[:top_n])
-plot_word_frequencies(top_words, top_scores, 'Top {} Words with Highest TF-IDF Scores'.format(top_n))
+# Convert the TF-IDF matrix to a Gensim corpus
+gensim_corpus = gensim.matutils.Sparse2Corpus(tfidf_matrix, documents_columns=False)
 
-# Number of topics and top words to display
-n_topics = 4
-no_top_words = 10
+# Create a Gensim dictionary from the bigram_trigram_docs
+gensim_dictionary = Dictionary([' '.join(doc).split() for doc in bigram_trigram_docs])
 
-# Initialize and fit LDA, LSA, and NMF models
-lda = LatentDirichletAllocation(n_components=n_topics, random_state=42).fit(tfidf_vectors)
-lsa = TruncatedSVD(n_components=n_topics).fit(tfidf_vectors)
-nmf = NMF(n_components=n_topics, random_state=42).fit(tfidf_vectors)
+# Filter extremes to mirror CountVectorizer's min_df and max_df
+gensim_dictionary.filter_extremes(no_below=5, no_above=0.25)
 
-# Display topics for each model
-print("\nLDA Model Topics:")
-display_topics(lda, tfidf_vectorizer.get_feature_names_out(), no_top_words)
-print("\nLSA Model Topics:")
-display_topics(lsa, tfidf_vectorizer.get_feature_names_out(), no_top_words)
-print("\nNMF Model Topics:")
-display_topics(nmf, tfidf_vectorizer.get_feature_names_out(), no_top_words)
+# Convert the documents to a Gensim corpus
+gensim_corpus = [gensim_dictionary.doc2bow(doc) for doc in [' '.join(doc).split() for doc in bigram_trigram_docs]]
 
-# Generate word clouds for LDA topics
-for topic_idx, topic in enumerate(lda.components_):
-    print("Word Cloud for LDA Topic {}:".format(topic_idx + 1))
-    generate_word_cloud(topic, tfidf_vectorizer.get_feature_names_out(), no_top_words)
 
-# t-SNE Visualization for LDA
-def tsne_visualization(model, data):
-    print("\nPerforming t-SNE Visualization...")
-    topic_weights = model.transform(data)
-    tsne_model = TSNE(n_components=2, verbose=0, random_state=0, angle=.99, init='pca')
-    tsne_lda = tsne_model.fit_transform(topic_weights)
-    return tsne_lda
+def compute_coherence(model, gensim_corpus, texts, coherence_measure='c_v'):
+    coherence_model = CoherenceModel(model=model, texts=texts, corpus=gensim_corpus, dictionary=model.id2word, coherence=coherence_measure)
+    return coherence_model.get_coherence()
 
-# Plot t-SNE
-def plot_tsne(tsne_results, title):
-    plt.figure(figsize=(12, 8))
-    plt.scatter(tsne_results[:, 0], tsne_results[:, 1], alpha=0.7)
-    plt.xlabel('t-SNE feature 1')
-    plt.ylabel('t-SNE feature 2')
-    plt.title(title)
-    plt.savefig('images/tfidf_tsne_lda.png')
-    plt.show()
+# Set parameters and run the models
+num_topics = range(3, 11)  # Adjust the number of topics as needed
+coherence_scores = {'LDA': [], 'NMF': []}
+models = {'LDA': [], 'NMF': []}
 
-tsne_lda = tsne_visualization(lda, tfidf_vectors)
-plot_tsne(tsne_lda, 't-SNE Visualization of LDA Topics')
+
+# Compute coherence scores for different number of topics. pay attention toIndexError: index 942585 is out of bounds for axis 1 with size 8541
+for k in num_topics:
+    lda_model = LdaModel(corpus=gensim_corpus, num_topics=k, id2word=gensim_dictionary, passes=10, random_state=42)
+    models['LDA'].append(lda_model)
+    coherence_scores['LDA'].append(compute_coherence(lda_model, gensim_corpus, bigram_trigram_docs))
+
+    nmf_model = Nmf(corpus=gensim_corpus, num_topics=k, id2word=gensim_dictionary, passes=10, random_state=42)
+    models['NMF'].append(nmf_model)
+    coherence_scores['NMF'].append(compute_coherence(nmf_model, gensim_corpus, bigram_trigram_docs))
+
+    print(f'Num Topics: {k}, LDA Coherence: {coherence_scores["LDA"][-1]}, NMF Coherence: {coherence_scores["NMF"][-1]}')
+
+
+# Plot coherence scores
+plt.figure(figsize=(12, 6))
+plt.plot(num_topics, coherence_scores['LDA'], label='LDA')
+plt.plot(num_topics, coherence_scores['NMF'], label='NMF')
+plt.title('Coherence Score as a Function of the Number of Topics')
+plt.xlabel('Number of Topics')
+plt.ylabel('Coherence Score')
+plt.legend(title='Model', loc='best')
+plt.show()
+
+# Find the model with the highest coherence and print the topics
+best_lda_index = np.argmax(coherence_scores['LDA'])
+best_nmf_index = np.argmax(coherence_scores['NMF'])
+
+best_lda_model = models['LDA'][best_lda_index]
+best_nmf_model = models['NMF'][best_nmf_index]
+
+# Print the topics from the best models
+print("\nBest LDA Model Topics:")
+for topic_idx, topic in enumerate(best_lda_model.show_topics(num_topics=best_lda_model.num_topics, formatted=False)):
+    word_probs = topic[1]
+    print("Topic %d:" % (topic_idx), " ".join([word for word, _ in word_probs]))
+
+print("\nBest NMF Model Topics:")
+for topic_idx, topic in enumerate(best_nmf_model.show_topics(num_topics=best_nmf_model.num_topics, formatted=False)):
+    word_probs = topic[1]
+    print("Topic %d:" % (topic_idx), " ".join([word for word, _ in word_probs]))
+
+# Save models
+best_lda_model.save('models/tfidf_lda_model')
+best_nmf_model.save('models/tfidf_nmf_model')
 
 
 if __name__ == "__main__":
