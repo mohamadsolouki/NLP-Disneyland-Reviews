@@ -1,106 +1,92 @@
-# bag_of_words.py
-
 import pandas as pd
+from gensim.models import LdaModel, Nmf
+from gensim.models.coherencemodel import CoherenceModel
+from gensim.corpora import Dictionary
 import matplotlib.pyplot as plt
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.decomposition import LatentDirichletAllocation, TruncatedSVD, NMF
-from sklearn.manifold import TSNE
-from wordcloud import WordCloud
+import numpy as np
+from nltk import bigrams
+import warnings
 
-# Load the preprocessed data
-file_path = 'data/cleaned_reviews.csv'
-clean_df = pd.read_csv(file_path)
+# Suppress warnings that do not affect the analysis
+warnings.simplefilter(action='ignore', category=DeprecationWarning)
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
-# Initialize CountVectorizer and fit and transform
-count_vectorizer = CountVectorizer(stop_words='english', ngram_range=(2, 3), min_df=5, max_df=0.5)
-count_vectors = count_vectorizer.fit_transform(clean_df['Clean_Text'])
+# Load the cleaned reviews
+df = pd.read_csv('data/cleaned_reviews.csv')
 
+# Loading list of strings containing the preprocessed documents
+# df should be defined previously and should contain a 'Clean_Text' column
+preprocessed_docs = df['Clean_Text'].tolist()
 
-# Function to display topics
-def display_topics(model, feature_names, no_top_words):
-    for topic_idx, topic in enumerate(model.components_):
-        print("\nTopic {}:".format(topic_idx + 1))
-        print(", ".join([feature_names[i] for i in topic.argsort()[:-no_top_words - 1:-1]]))
+# Tokenized docs needed for coherence score calculation
+tokenized_docs = [doc.split() for doc in preprocessed_docs]
 
+# Generate bigrams and trigrams
+bigram_docs = []
+for doc in tokenized_docs:
+    grams = list(bigrams(doc))
+    bigram_docs.append(['_'.join(gram) for gram in grams])
 
-# Function to plot word frequencies
-def plot_word_frequencies(words, freqs, title):
-    plt.figure(figsize=(10, 8))
-    plt.barh(range(len(words)), freqs, align='center')
-    plt.yticks(range(len(words)), words)
-    plt.gca().invert_yaxis()  # Invert y-axis to have the highest frequency on top
-    plt.xlabel('Frequency')
-    plt.title(title)
-    plt.show()
+# Create a Gensim dictionary from the tokenized docs
+gensim_dictionary = Dictionary(bigram_docs)
 
+# Filter extremes to mirror CountVectorizer's min_df and max_df
+gensim_dictionary.filter_extremes(no_below=10, no_above=0.3)
 
-# Function to generate a word cloud
-def generate_word_cloud(topic, feature_names, no_top_words):
-    word_freqs = {feature_names[i]: topic[i] for i in topic.argsort()[:-no_top_words - 1:-1]}
-    wordcloud = WordCloud(width=800, height=400, background_color='white').generate_from_frequencies(word_freqs)
-    plt.figure(figsize=(10, 5))
-    plt.imshow(wordcloud, interpolation='bilinear')
-    plt.axis('off')
-    plt.show()
+# Convert the dictionary to a bag of words corpus for reference
+gensim_corpus = [gensim_dictionary.doc2bow(doc) for doc in bigram_docs]
 
+def compute_coherence(model, gensim_corpus, texts, coherence_measure='c_v'):
+    coherence_model = CoherenceModel(model=model, texts=texts, corpus=gensim_corpus, dictionary=model.id2word, coherence=coherence_measure)
+    return coherence_model.get_coherence()
 
-# Sum up the counts of each vocabulary word
-sum_words = count_vectors.sum(axis=0)
-words_freq = [(word, sum_words[0, idx]) for word, idx in count_vectorizer.vocabulary_.items()]
-sorted_words_freq = sorted(words_freq, key=lambda x: x[1], reverse=True)
+# Set parameters and run the models
+num_topics = range(3, 11) # Adjust the number of topics as needed
+coherence_scores = {'LDA': [], 'NMF': []}
+models = {'LDA': [], 'NMF': []}
 
-# Display the top N most frequent words
-top_n = 30
-print("\nTop {} most frequent words/ngrams:".format(top_n))
-print("-" * 40)
-for word, freq in sorted_words_freq[:top_n]:
-    print("{:<20} : {}".format(word, freq))
-print("-" * 40)
+for k in num_topics:
+    lda_model = LdaModel(corpus=gensim_corpus, num_topics=k, id2word=gensim_dictionary, passes=10, random_state=42)
+    models['LDA'].append(lda_model)
+    coherence_scores['LDA'].append(compute_coherence(lda_model, gensim_corpus, bigram_docs))
 
-# Plotting the top N words/ngrams
-top_words, top_freqs = zip(*sorted_words_freq[:top_n])
-plot_word_frequencies(top_words, top_freqs, 'Top {} Words/N-grams Frequency'.format(top_n))
+    nmf_model = Nmf(corpus=gensim_corpus, num_topics=k, id2word=gensim_dictionary, passes=10, random_state=42)
+    models['NMF'].append(nmf_model)
+    coherence_scores['NMF'].append(compute_coherence(nmf_model, gensim_corpus, bigram_docs))
 
-# Number of topics and top words to display
-n_topics = 4
-no_top_words = 10
+    print(f'Num Topics: {k}, LDA Coherence: {coherence_scores["LDA"][-1]}, NMF Coherence: {coherence_scores["NMF"][-1]}')
 
-# Initialize and fit LDA, LSA, and NMF models
-lda = LatentDirichletAllocation(n_components=n_topics, random_state=42).fit(count_vectors)
-lsa = TruncatedSVD(n_components=n_topics).fit(count_vectors)
-nmf = NMF(n_components=n_topics, random_state=42).fit(count_vectors)
+# Plot coherence scores
+plt.figure(figsize=(12, 6))
+plt.plot(num_topics, coherence_scores['LDA'], label='LDA')
+plt.plot(num_topics, coherence_scores['NMF'], label='NMF')
+plt.title('Coherence Score as a Function of the Number of Topics')
+plt.xlabel('Number of Topics')
+plt.ylabel('Coherence Score')
+plt.legend(title='Model', loc='best')
+plt.show()
 
-# Display topics for each model
-print("\nLDA Model Topics:")
-display_topics(lda, count_vectorizer.get_feature_names_out(), no_top_words)
-print("\nLSA Model Topics:")
-display_topics(lsa, count_vectorizer.get_feature_names_out(), no_top_words)
-print("\nNMF Model Topics:")
-display_topics(nmf, count_vectorizer.get_feature_names_out(), no_top_words)
+# Find the model with the highest coherence and print the topics
+best_lda_index = np.argmax(coherence_scores['LDA'])
+best_nmf_index = np.argmax(coherence_scores['NMF'])
 
-# Generate word clouds for LDA topics
-for topic_idx, topic in enumerate(lda.components_):
-    print("Word Cloud for LDA Topic {}:".format(topic_idx + 1))
-    generate_word_cloud(topic, count_vectorizer.get_feature_names_out(), no_top_words)
+best_lda_model = models['LDA'][best_lda_index]
+best_nmf_model = models['NMF'][best_nmf_index]
 
+# Print the topics from the best models
+print("\nBest LDA Model Topics:")
+for topic_idx, topic in enumerate(best_lda_model.show_topics(num_topics=best_lda_model.num_topics, formatted=False)):
+    word_probs = topic[1]
+    print("Topic %d:" % (topic_idx), " ".join([word for word,_ in word_probs]))
 
-# t-SNE Visualization for LDA
-def tsne_visualization(model, data):
-    print("\nPerforming t-SNE Visualization...")
-    topic_weights = model.transform(data)
-    tsne_model = TSNE(n_components=2, verbose=0, random_state=0, angle=.99, init='pca')
-    tsne_lda = tsne_model.fit_transform(topic_weights)
+print("\nBest NMF Model Topics:")
+for topic_idx, topic in enumerate(best_nmf_model.show_topics(num_topics=best_nmf_model.num_topics, formatted=False)):
+    word_probs = topic[1]
+    print("Topic %d:" % (topic_idx), " ".join([word for word, _ in word_probs]))
 
-    # Plot the t-SNE visualization
-    plt.figure(figsize=(10, 5))
-    plt.scatter(tsne_lda[:, 0], tsne_lda[:, 1], alpha=0.5)
-    plt.title('t-SNE Visualization of LDA Topics')
-    plt.xlabel('t-SNE Component 1')
-    plt.ylabel('t-SNE Component 2')
-    plt.show()
-
-    return tsne_lda
-
+# Save models
+best_lda_model.save('models/bow_lda_model')
+best_nmf_model.save('models/bow_nmf_model')
 
 if __name__ == "__main__":
     # This script can be run as a standalone program, with the above functions defined.
