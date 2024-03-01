@@ -1,77 +1,141 @@
 import pandas as pd
-from gensim.models import Word2Vec
-from gensim.corpora import Dictionary
-from gensim.models import LdaModel
-from nltk.tokenize import word_tokenize
-from gensim.models import KeyedVectors
+from gensim.models import Word2Vec, Phrases
+from sklearn.cluster import KMeans
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
-from sklearn.manifold import TSNE
-import pyLDAvis.gensim
+from joblib import Parallel, delayed
+import numpy as np
+import warnings
 
+# Suppress warnings that do not affect the analysis
+warnings.simplefilter(action='ignore', category=DeprecationWarning)
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
-# Load the preprocessed reviews
-preprocessed_reviews = []
+# Load the cleaned reviews
 df = pd.read_csv('data/cleaned_reviews.csv')
-for review in df['Clean_Text']:
-    preprocessed_reviews.append(word_tokenize(review))
+preprocessed_docs = df['Clean_Text'].tolist()
 
-# Train Word2Vec model
-model = Word2Vec(preprocessed_reviews, window=5, min_count=1, workers=4)
+# Tokenized docs
+tokenized_docs = [doc.split() for doc in preprocessed_docs]
 
-# Represent reviews as vectors
-review_vectors = [model.wv[token] for review in preprocessed_reviews for token in review]
+# Generate bigrams and trigrams using Gensim's Phrases
+bigram = Phrases(tokenized_docs, min_count=10)
+trigram = Phrases(bigram[tokenized_docs])
+bigram_trigram_docs = [trigram[bigram[doc]] for doc in tokenized_docs]
 
-# Apply LDA for topic modeling
-dictionary = Dictionary(preprocessed_reviews)
-corpus = [dictionary.doc2bow(review) for review in preprocessed_reviews]
-lda_model = LdaModel(corpus, num_topics=5, id2word=dictionary)
+# Train a Word2Vec model
+model = Word2Vec(bigram_trigram_docs, vector_size=100, workers=4)
 
-# Print the topics
-for topic in lda_model.print_topics():
-    print(f"Topic {topic[0]}: {topic[1]}")
-    print("\n")
+# Get the vectors for all words/phrases in the model
+vectors = model.wv.vectors
 
-# Save the Word2Vec model
-model.wv.save('word2vec.model')
+# Standardize the vectors using StandardScaler
+scaler = StandardScaler()
+vectors_standardized = scaler.fit_transform(vectors)
 
-# Load the model
-word2vec_model = KeyedVectors.load('word2vec.model')
+# Fit KMeans models and calculate distortion for a range of cluster numbers using parallel processing
+def calculate_distortion(k):
+    kmeans = KMeans(n_clusters=k, random_state=42)
+    kmeans.fit(vectors_standardized)
+    return k, kmeans.inertia_
 
-# Use the Word2Vec model to find similar words
-similar_words = word2vec_model.similar_by_word('line')
-print(f"The words similar to 'line' are: {similar_words}")
-print("\n")
+num_clusters = range(2, 31)
+distortion_scores = dict(Parallel(n_jobs=-1)(delayed(calculate_distortion)(k) for k in num_clusters))
 
-# Use the Word2Vec model to find the similarity between two words
-similarity = word2vec_model.similarity('queue', 'long')
-print(f"The similarity between 'queue' and 'long' is {similarity}")
-
-# Visualizing using pyLDAvis
-import pyLDAvis
-import IPython
-
-# Visualize the topics
-if IPython.get_ipython() is not None:
-    pyLDAvis.enable_notebook()
-
-vis = pyLDAvis.gensim.prepare(lda_model, corpus, dictionary)
-pyLDAvis.save_html(vis, 'lda_topics.html')
-
-# Visualize the Word2Vec model using t-SNE
-# Get the word vectors
-word_vectors = word2vec_model.vectors
-
-# Reduce the dimensionality of the word vectors using t-SNE
-tsne = TSNE(n_components=2, random_state=42)
-word_vectors_2d = tsne.fit_transform(word_vectors)
-
-# Plot the word vectors in 2D
-plt.figure(figsize=(10, 10))
-plt.scatter(word_vectors_2d[:, 0], word_vectors_2d[:, 1], marker='o')
-plt.title('t-SNE visualization of Word2Vec model')
-plt.xlabel('Dimension 1')
-plt.ylabel('Dimension 2')
-plt.tight_layout()
-plt.savefig('images/word2vec_tsne.png')
+# Plot distortion scores
+plt.figure(figsize=(12, 6))
+plt.plot(list(distortion_scores.keys()), list(distortion_scores.values()), marker='o')
+plt.title('Distortion Score as a Function of the Number of Clusters')
+plt.xlabel('Number of Clusters')
+plt.ylabel('Distortion Score')
 plt.show()
 
+# Find the best number of clusters using the elbow method
+best_k = min(distortion_scores, key=distortion_scores.get)
+print(f'Best number of clusters: {best_k}')
+
+# Train a KMeans model with the best number of clusters
+best_kmeans = KMeans(n_clusters=best_k, random_state=42)
+best_kmeans.fit(vectors_standardized)
+
+# Reduce the dimensionality of the cluster centers for visualization
+pca = PCA(n_components=2)
+cluster_centers_2d = pca.fit_transform(best_kmeans.cluster_centers_)
+
+# Visualize the cluster centers
+plt.figure(figsize=(8, 6))
+plt.scatter(cluster_centers_2d[:, 0], cluster_centers_2d[:, 1])
+for i, center in enumerate(cluster_centers_2d):
+    plt.annotate(str(i), (center[0], center[1]))
+plt.title('Cluster Centers')
+plt.show()
+
+# Assign each word to a cluster
+word_to_cluster = {word: best_kmeans.labels_[i] for i, word in enumerate(model.wv.index_to_key)}
+
+# Print the top words for each cluster
+for cluster in range(best_k):
+    print(f'Cluster {cluster}:')
+    top_words = [word for word, clust in word_to_cluster.items() if clust == cluster]
+    print(top_words[:10])  # Print```python
+import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.decomposition import PCA
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
+import matplotlib.pyplot as plt
+import numpy as np
+from yellowbrick.cluster import KElbowVisualizer
+
+# Load dataset
+df = pd.read_csv('data/cleaned_reviews.csv')
+docs = df['Clean_Text'].values
+
+# Vectorization
+tfidf_vectorizer = TfidfVectorizer(max_df=0.95, min_df=2, max_features=1000, stop_words='english')
+tfidf = tfidf_vectorizer.fit_transform(docs)
+tfidf_norm = StandardScaler().fit_transform(tfidf.toarray())
+
+# Optimal cluster finding
+model = KMeans()
+visualizer = KElbowVisualizer(model, k=(2,30), timings=False)
+visualizer.fit(tfidf_norm)
+visualizer.show()
+
+best_k = visualizer.elbow_value_
+print(f"Best number of clusters: {best_k}")
+
+# Clustering
+km = KMeans(n_clusters=7)
+clusters = km.fit_predict(tfidf_norm)
+
+# PCA for dimensionality reduction for visualization
+pca = PCA(n_components=2)
+scatter_plot_points = pca.fit_transform(tfidf_norm)
+colors = ['r', 'b', 'g', 'c', 'm', 'y', 'k']
+
+x_axis = [o[0] for o in scatter_plot_points]
+y_axis = [o[1] for o in scatter_plot_points]
+fig, ax = plt.subplots(figsize=(20,10))
+
+for i in range(best_k):
+    points = np.array([scatter_plot_points[j] for j in range(len(scatter_plot_points)) if clusters[j] == i])
+    ax.scatter(points[:, 0], points[:, 1], s=25, c=colors[i], label=f'Cluster {i}')
+
+ax.legend()
+plt.title('Clusters by PCA Components')
+plt.show()
+
+# Print top terms per cluster
+print("Top terms per cluster:")
+order_centroids = km.cluster_centers_.argsort()[:, ::-1]
+terms = tfidf_vectorizer.get_feature_names_out()
+for i in range(best_k):
+    top_terms = [terms[ind] for ind in order_centroids[i, :10]]
+    print(f"Cluster {i}: {', '.join(top_terms)}")
+
+
+if __name__ == "__main__":
+    # This script can be run as a standalone program, with the above functions defined.
+    pass
