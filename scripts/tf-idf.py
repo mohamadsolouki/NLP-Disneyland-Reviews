@@ -9,6 +9,7 @@ from nltk import bigrams, trigrams
 import warnings
 from sklearn.feature_extraction.text import TfidfVectorizer
 import pickle
+import pyLDAvis.gensim
 
 # Suppress warnings that do not affect the analysis
 warnings.simplefilter(action='ignore', category=DeprecationWarning)
@@ -43,7 +44,7 @@ gensim_corpus = gensim.matutils.Sparse2Corpus(tfidf_matrix, documents_columns=Fa
 gensim_dictionary = Dictionary([' '.join(doc).split() for doc in bigram_trigram_docs])
 
 # Filter extremes 
-gensim_dictionary.filter_extremes(no_below=5, no_above=0.4)
+gensim_dictionary.filter_extremes(no_below=5, no_above=0.5)
 
 # Convert the documents to a Gensim corpus
 gensim_corpus = [gensim_dictionary.doc2bow(doc) for doc in [' '.join(doc).split() for doc in bigram_trigram_docs]]
@@ -111,6 +112,7 @@ with open('models/tfidf_nmf_model', 'wb') as f:
 pyLDAvis.enable_notebook()
 vis = pyLDAvis.gensim.prepare(best_lda_model, gensim_corpus, gensim_dictionary)
 vis
+
 
 if __name__ == "__main__":
     # This script can be run as a standalone program, with the above functions defined.

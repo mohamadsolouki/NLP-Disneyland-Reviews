@@ -21,7 +21,7 @@ topics, probs = topic_model.fit_transform(docs)
 topic_info = topic_model.get_topic_info()
 
 # Show the top 10 topics
-for topic_num in topic_info['Topic'][:10]:
+for topic_num in topic_info['Topic'][:15]:
     if topic_num != -1:  # Exclude the -1 topic which contains outliers
         print(f"Topic {topic_num}: {topic_model.get_topic(topic_num)}\n")
 
@@ -41,3 +41,8 @@ topic_model.visualize_barchart(top_n_topics=16)
 
 # Visualize the topic heatmap
 topic_model.visualize_heatmap()
+
+
+if __name__ == "__main__":
+    # This script can be run as a standalone program, with the above functions defined.
+    pass
