@@ -86,10 +86,10 @@ for topic_idx, topic in enumerate(best_nmf_model.show_topics(num_topics=best_nmf
     print("Topic %d:" % (topic_idx), " ".join([word for word, _ in word_probs]))
 
 # Save models
-with open('models/best_lda_model.pkl', 'wb') as f:
+with open('models/bow_lda_model.pkl', 'wb') as f:
     pickle.dump(best_lda_model, f)
 
-with open('models/best_nmf_model.pkl', 'wb') as f:  
+with open('models/bow_nmf_model.pkl', 'wb') as f:  
     pickle.dump(best_nmf_model, f)
 
 if __name__ == "__main__":
