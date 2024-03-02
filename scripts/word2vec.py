@@ -7,6 +7,14 @@ import matplotlib.pyplot as plt
 from joblib import Parallel, delayed
 import numpy as np
 import warnings
+import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.decomposition import PCA
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
+import matplotlib.pyplot as plt
+import numpy as np
+from yellowbrick.cluster import KElbowVisualizer
 
 # Suppress warnings that do not affect the analysis
 warnings.simplefilter(action='ignore', category=DeprecationWarning)
@@ -79,14 +87,7 @@ for cluster in range(best_k):
     print(f'Cluster {cluster}:')
     top_words = [word for word, clust in word_to_cluster.items() if clust == cluster]
     print(top_words[:10])  # Print```python
-import pandas as pd
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.decomposition import PCA
-from sklearn.cluster import KMeans
-from sklearn.preprocessing import StandardScaler
-import matplotlib.pyplot as plt
-import numpy as np
-from yellowbrick.cluster import KElbowVisualizer
+
 
 # Load dataset
 df = pd.read_csv('data/cleaned_reviews.csv')
@@ -134,7 +135,6 @@ terms = tfidf_vectorizer.get_feature_names_out()
 for i in range(best_k):
     top_terms = [terms[ind] for ind in order_centroids[i, :10]]
     print(f"Cluster {i}: {', '.join(top_terms)}")
-
 
 if __name__ == "__main__":
     # This script can be run as a standalone program, with the above functions defined.
