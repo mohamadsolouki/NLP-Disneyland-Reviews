@@ -8,6 +8,8 @@ This repository contains a series of scripts and analyses that focus on understa
 - `/scripts`: Contains all the Python scripts used to process and analyze the data.
 - `/images`: This directory stores visualizations created from the analyses, such as plots and word clouds.
 - `/models`: Contains the trained models used for topic modeling and other NLP tasks.
+- `requirements.txt`: A list of Python packages required to run the scripts in this repository.
+- `Full-Analysis.ipynb`: A Jupyter notebook that contains the full analysis of the Disneyland reviews dataset.
 
 ## Scripts Overview
 
@@ -47,6 +49,7 @@ To run this project, you will need to have Python installed on your system. You 
     python scripts/keybert.py
     python scripts/bertopic.py
     ```
+6. You can also run the full analysis in the `Full-Analysis.ipynb` Jupyter notebook in the main directory, without running the scripts individually.
 
 ## Dataset
 The `data/` folder contains the Disneyland reviews dataset in CSV format. The dataset includes customer reviews which have been used to perform sentiment analysis, topic modeling, and other NLP tasks.
