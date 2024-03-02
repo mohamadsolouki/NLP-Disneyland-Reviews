@@ -7,13 +7,7 @@ import matplotlib.pyplot as plt
 from joblib import Parallel, delayed
 import numpy as np
 import warnings
-import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.decomposition import PCA
-from sklearn.cluster import KMeans
-from sklearn.preprocessing import StandardScaler
-import matplotlib.pyplot as plt
-import numpy as np
 from yellowbrick.cluster import KElbowVisualizer
 
 # Suppress warnings that do not affect the analysis
