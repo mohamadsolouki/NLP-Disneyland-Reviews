@@ -36,11 +36,13 @@ vectors = model.wv.vectors
 scaler = StandardScaler()
 vectors_standardized = scaler.fit_transform(vectors)
 
+
 # Fit KMeans models and calculate distortion for a range of cluster numbers using parallel processing
 def calculate_distortion(k):
     kmeans = KMeans(n_clusters=k, random_state=42)
     kmeans.fit(vectors_standardized)
     return k, kmeans.inertia_
+
 
 num_clusters = range(2, 31)
 distortion_scores = dict(Parallel(n_jobs=-1)(delayed(calculate_distortion)(k) for k in num_clusters))
@@ -82,7 +84,6 @@ for cluster in range(best_k):
     top_words = [word for word, clust in word_to_cluster.items() if clust == cluster]
     print(top_words[:10])  # Print```python
 
-
 # Load dataset
 df = pd.read_csv('data/cleaned_reviews.csv')
 docs = df['Clean_Text'].values
@@ -94,7 +95,7 @@ tfidf_norm = StandardScaler().fit_transform(tfidf.toarray())
 
 # Optimal cluster finding
 model = KMeans()
-visualizer = KElbowVisualizer(model, k=(2,30), timings=False)
+visualizer = KElbowVisualizer(model, k=(2, 30), timings=False)
 visualizer.fit(tfidf_norm)
 visualizer.show()
 
@@ -112,7 +113,7 @@ colors = ['r', 'b', 'g', 'c', 'm', 'y', 'k']
 
 x_axis = [o[0] for o in scatter_plot_points]
 y_axis = [o[1] for o in scatter_plot_points]
-fig, ax = plt.subplots(figsize=(20,10))
+fig, ax = plt.subplots(figsize=(20, 10))
 
 for i in range(best_k):
     points = np.array([scatter_plot_points[j] for j in range(len(scatter_plot_points)) if clusters[j] == i])

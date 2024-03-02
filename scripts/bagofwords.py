@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from nltk import bigrams
 import warnings
+import pickle
 
 # Suppress warnings that do not affect the analysis
 warnings.simplefilter(action='ignore', category=DeprecationWarning)
@@ -31,7 +32,7 @@ for doc in tokenized_docs:
 gensim_dictionary = Dictionary(bigram_docs)
 
 # Filter extremes to mirror CountVectorizer's min_df and max_df
-gensim_dictionary.filter_extremes(no_below=10, no_above=0.3)
+gensim_dictionary.filter_extremes(no_below=5, no_above=0.4)
 
 # Convert the dictionary to a bag of words corpus for reference
 gensim_corpus = [gensim_dictionary.doc2bow(doc) for doc in bigram_docs]
@@ -85,8 +86,11 @@ for topic_idx, topic in enumerate(best_nmf_model.show_topics(num_topics=best_nmf
     print("Topic %d:" % (topic_idx), " ".join([word for word, _ in word_probs]))
 
 # Save models
-best_lda_model.save('models/bow_lda_model')
-best_nmf_model.save('models/bow_nmf_model')
+with open('models/best_lda_model.pkl', 'wb') as f:
+    pickle.dump(best_lda_model, f)
+
+with open('models/best_nmf_model.pkl', 'wb') as f:  
+    pickle.dump(best_nmf_model, f)
 
 if __name__ == "__main__":
     # This script can be run as a standalone program, with the above functions defined.

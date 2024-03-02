@@ -8,7 +8,7 @@ import numpy as np
 from nltk import bigrams, trigrams
 import warnings
 from sklearn.feature_extraction.text import TfidfVectorizer
-import pyLDAvis.gensim
+import pickle
 
 # Suppress warnings that do not affect the analysis
 warnings.simplefilter(action='ignore', category=DeprecationWarning)
@@ -42,8 +42,8 @@ gensim_corpus = gensim.matutils.Sparse2Corpus(tfidf_matrix, documents_columns=Fa
 # Create a Gensim dictionary from the bigram_trigram_docs
 gensim_dictionary = Dictionary([' '.join(doc).split() for doc in bigram_trigram_docs])
 
-# Filter extremes to mirror CountVectorizer's min_df and max_df
-gensim_dictionary.filter_extremes(no_below=5, no_above=0.25)
+# Filter extremes 
+gensim_dictionary.filter_extremes(no_below=5, no_above=0.4)
 
 # Convert the documents to a Gensim corpus
 gensim_corpus = [gensim_dictionary.doc2bow(doc) for doc in [' '.join(doc).split() for doc in bigram_trigram_docs]]
@@ -100,15 +100,17 @@ for topic_idx, topic in enumerate(best_nmf_model.show_topics(num_topics=best_nmf
     word_probs = topic[1]
     print("Topic %d:" % (topic_idx), " ".join([word for word, _ in word_probs]))
 
-# Save models
-best_lda_model.save('models/tfidf_lda_model')
-best_nmf_model.save('models/tfidf_nmf_model')
+# Save models using pickle module
+with open('models/tfidf_lda_model', 'wb') as f:
+    pickle.dump(best_lda_model, f)
+
+with open('models/tfidf_nmf_model', 'wb') as f:
+    pickle.dump(best_nmf_model, f)
 
 # Visualize the topics
 pyLDAvis.enable_notebook()
 vis = pyLDAvis.gensim.prepare(best_lda_model, gensim_corpus, gensim_dictionary)
 vis
-
 
 if __name__ == "__main__":
     # This script can be run as a standalone program, with the above functions defined.

@@ -7,7 +7,7 @@ from nltk.stem import WordNetLemmatizer
 import spacy
 
 
-# Loading the dataset
+# Load the dataset
 file_path = 'data/DisneylandReviews.csv'
 df = pd.read_csv(file_path, encoding='ISO-8859-1')
 
@@ -21,11 +21,13 @@ nltk.download('averaged_perceptron_tagger')
 nlp = spacy.load("en_core_web_sm", disable=["parser", "ner"])
 
 # Custom stopwords
-custom_stopwords = {'disney', 'land', 'disneyland', 'go', 'one', 'kid', 'world', 'I', 'day', 'thing', 'went', 'child', 'daughter'}
+custom_stopwords = {'disney', 'land', 'disneyland', 'go', 'one', 'kid', 'world', 'I', 'day', 'thing', 'went', 'child',
+                    'daughter'}
 stop_words = set(stopwords.words('english')) | custom_stopwords
 
 # Lemmatizer
 lemmatizer = WordNetLemmatizer()
+
 
 # Handling negations by creating bi-grams with negation word and subsequent word.
 def handle_negations(text):
@@ -37,6 +39,7 @@ def handle_negations(text):
     )
     negated_form = r'\1_\2'  # E.g., "not_good"
     return negation_pattern.sub(negated_form, text)
+
 
 # Function to preprocess text
 def preprocess_text(text):
@@ -52,6 +55,7 @@ def preprocess_text(text):
     except Exception as e:
         print(f"Error processing text: {e}")
         return ""
+
 
 # Apply preprocessing to the Review_Text column of the DataFrame
 low_rating_threshold = 3
