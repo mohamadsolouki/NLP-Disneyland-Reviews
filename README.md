@@ -7,21 +7,21 @@ This repository contains a series of scripts and analyses that focus on understa
 - `/data`: This directory contains the Disneyland reviews dataset used for the analysis.
 - `/scripts`: Contains all the Python scripts used to process and analyze the data.
 - `/images`: This directory stores visualizations created from the analyses, such as plots and word clouds.
+- `/models`: Contains the trained models used for topic modeling and other NLP tasks.
+- `requirements.txt`: A list of Python packages required to run the scripts in this repository.
+- `Full-Analysis.ipynb`: A Jupyter notebook that contains the full analysis of the Disneyland reviews dataset.
 
 ## Scripts Overview
 
 The analysis pipeline is broken down into four main Python scripts:
 
 1. `eda.py`: An exploratory data analysis (EDA) script that generates initial observations, statistics, and visualizations to better understand the dataset.
-2. `sentiment.py`: This script uses the TextBlob library to perform sentiment analysis on the reviews, providing insights into the overall sentiment of the customers.
 2. `preprocess.py`: This script preprocesses the text data — cleaning, tokenizing, and filtering to prepare it for NLP tasks.
 3. `bagofwords.py`: Utilizes the Bag of Words model to create a document-term matrix and analyze word frequencies within the dataset.
 4. `tfidf.py`: Applies Term Frequency-Inverse Document Frequency (TF-IDF) to evaluate how important a word is to a document within a corpus.
-5. `word2vec.py`: Uses the Word2Vec model to create word embeddings and analyze the semantic relationships between words.
-
-## Dataset
-
-The `data/` folder contains the Disneyland reviews dataset in CSV format. The dataset includes customer reviews which have been used to perform sentiment analysis, topic modeling, and other NLP tasks.
+5. `word2vec.py`: Uses the Word2Vec model to create word embeddings use kmeans clustering to group similar words together.
+6. `keybert.py`: Applies the KeyBERT model to extract keywords from the reviews.
+7. `bertopic.py`: Applies the BERTopic model to perform topic modeling on the reviews.
 
 ## Getting Started
 
@@ -39,18 +39,25 @@ To run this project, you will need to have Python installed on your system. You 
     ```
     pip install -r requirements.txt
     ```
-5. Navigate to the `scripts/` directory and execute the scripts in following order:
+5. From the main directory and execute the scripts in following order:
     ```
-    python eda.py
-    python sentiment.py
-    python preprocess.py
-    python bagofwords.py
-    python tfidf.py
-    python word2vec.py
+    python scripts/eda.py
+    python scripts/preprocess.py
+    python scripts/bagofwords.py
+    python scripts/tfidf.py
+    python scripts/word2vec.py
+    python scripts/keybert.py
+    python scripts/bertopic.py
     ```
+6. You can also run the full analysis in the `Full-Analysis.ipynb` Jupyter notebook in the main directory, without running the scripts individually.
+
+## Dataset
+The `data/` folder contains the Disneyland reviews dataset in CSV format. The dataset includes customer reviews which have been used to perform sentiment analysis, topic modeling, and other NLP tasks.
+
+## Models
+The `models/` directory contains the trained models for the analysis. These models are used to perform topic modeling and other NLP tasks.
 
 ## Visualization
-
 The `images/` directory includes all visualizations generated during the analysis. These images provide insights into the dataset.
 
 ## Contributions
