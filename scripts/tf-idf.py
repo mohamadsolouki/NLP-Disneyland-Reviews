@@ -8,6 +8,7 @@ import numpy as np
 from nltk import bigrams, trigrams
 import warnings
 from sklearn.feature_extraction.text import TfidfVectorizer
+import pyLDAvis.gensim
 
 # Suppress warnings that do not affect the analysis
 warnings.simplefilter(action='ignore', category=DeprecationWarning)
@@ -102,6 +103,11 @@ for topic_idx, topic in enumerate(best_nmf_model.show_topics(num_topics=best_nmf
 # Save models
 best_lda_model.save('models/tfidf_lda_model')
 best_nmf_model.save('models/tfidf_nmf_model')
+
+# Visualize the topics
+pyLDAvis.enable_notebook()
+vis = pyLDAvis.gensim.prepare(best_lda_model, gensim_corpus, gensim_dictionary)
+vis
 
 
 if __name__ == "__main__":
