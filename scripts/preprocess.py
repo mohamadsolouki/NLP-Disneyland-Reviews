@@ -4,8 +4,12 @@ import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.stem import WordNetLemmatizer
-from textblob import TextBlob
+import spacy
 
+
+# Loading the dataset
+file_path = 'data/DisneylandReviews.csv'
+df = pd.read_csv(file_path, encoding='ISO-8859-1')
 
 # Ensure NLTK resources are downloaded
 nltk.download('punkt')
